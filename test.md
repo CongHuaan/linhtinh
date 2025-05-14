@@ -537,3 +537,84 @@ graph TD
    - Database sharding
    - Message queue
    - Stateless services
+
+## Bước 8: Xác định các dịch vụ phối hợp (Composition Candidates)
+
+### Quy trình phối hợp khi khách hàng đặt hàng
+
+#### Order-handler (bắt đầu)
+Gọi Customer Service để xác thực thông tin khách hàng:
+- *Endpoint*: POST /api/customers/validate
+- *Payload*: { customerId, orderDetails }
+
+Kiểm tra tồn kho thông qua Inventory Service:
+- *Endpoint*: GET /api/inventory/{skuCode}
+- *Response*: { available, quantity }
+
+Tạo đơn hàng mới:
+- *Endpoint*: POST /api/orders
+- *Payload*: { customerId, items, totalAmount }
+
+Cập nhật tồn kho:
+- *Endpoint*: PUT /api/inventory/{skuCode}
+- *Payload*: { quantity }
+
+#### Notification-handler
+Gửi thông báo xác nhận đơn hàng:
+- *Endpoint*: POST /api/notifications/order-confirmation
+- *Payload*: { orderId, customerEmail, orderDetails }
+
+### Dịch vụ phối hợp (Composition Candidate)
+- *Dịch vụ tổng hợp (Composite Service): Order Processing Service*
+  - *Mô tả*: Đây là dịch vụ phối hợp bao gồm các dịch vụ con (Order-handler, Notification-handler) để xử lý toàn bộ quy trình đặt hàng.
+  - *Luồng phối hợp*:
+    1. Order-handler khởi động bằng cách xác thực thông tin khách hàng và kiểm tra tồn kho.
+    2. Sau khi xác thực thành công, tạo đơn hàng mới và cập nhật tồn kho.
+    3. Notification-handler nhận thông tin đơn hàng và gửi thông báo xác nhận đến khách hàng.
+
+### Sơ đồ tương tác giữa các dịch vụ phối hợp:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant OrderProcessing
+    participant OrderHandler
+    participant NotificationHandler
+    participant CustomerService
+    participant InventoryService
+
+    Client->>OrderProcessing: POST /api/orders
+    OrderProcessing->>OrderHandler: Process Order
+    OrderHandler->>CustomerService: Validate Customer
+    CustomerService-->>OrderHandler: Customer Valid
+    OrderHandler->>InventoryService: Check Stock
+    InventoryService-->>OrderHandler: Stock Available
+    OrderHandler->>InventoryService: Update Stock
+    InventoryService-->>OrderHandler: Stock Updated
+    OrderHandler->>OrderProcessing: Order Created
+    OrderProcessing->>NotificationHandler: Send Confirmation
+    NotificationHandler-->>OrderProcessing: Notification Sent
+    OrderProcessing-->>Client: Order Confirmed
+```
+
+### Các điểm cần lưu ý:
+
+1. **Xử lý lỗi**:
+   - Rollback transaction khi có lỗi
+   - Retry mechanism cho các service call
+   - Circuit breaker pattern
+
+2. **Tính nhất quán dữ liệu**:
+   - Sử dụng Saga pattern
+   - Event sourcing cho tracking
+   - Distributed transaction
+
+3. **Khả năng mở rộng**:
+   - Stateless services
+   - Message queue cho async processing
+   - Caching strategy
+
+4. **Monitoring**:
+   - Distributed tracing
+   - Performance metrics
+   - Error tracking
