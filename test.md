@@ -109,6 +109,11 @@ Các bước còn lại:
   - price: Giá (BigDecimal)
   - stock: Số lượng tồn kho (Integer)
   - description: Mô tả (String)
+  - category: Danh mục (String)
+  - images: Hình ảnh (List<String>)
+  - status: Trạng thái (String)
+  - createdAt: Thời gian tạo (Date)
+  - updatedAt: Thời gian cập nhật (Date)
 
 #### 1.3. Thực thể Customer (Khách hàng)
 - **Mục đích**: Quản lý thông tin khách hàng
@@ -172,6 +177,16 @@ Các bước còn lại:
   4. Tính toán tổng tiền
   5. Xóa giỏ hàng sau khi đặt hàng
 
+#### 2.6. Product Service
+- **Mục đích**: Quản lý thông tin sản phẩm
+- **Các chức năng chính**:
+  1. Quản lý danh mục sản phẩm
+  2. Thêm/sửa/xóa sản phẩm
+  3. Tìm kiếm và lọc sản phẩm
+  4. Quản lý hình ảnh sản phẩm
+  5. Quản lý đánh giá và bình luận
+  6. Cập nhật giá và thông tin sản phẩm
+
 ### 3. Mối quan hệ giữa các dịch vụ:
 
 ```mermaid
@@ -180,9 +195,11 @@ graph TD
     A -->|2. Kiểm tra tồn kho| C[Inventory Service]
     A -->|3. Gửi thông báo| D[Notification Service]
     A -->|4. Lấy thông tin giỏ hàng| E[Cart Service]
-    C -->|5. Cập nhật tồn kho| A
-    B -->|6. Cập nhật lịch sử| A
-    E -->|7. Xóa giỏ hàng| A
+    A -->|5. Lấy thông tin sản phẩm| F[Product Service]
+    C -->|6. Cập nhật tồn kho| A
+    B -->|7. Cập nhật lịch sử| A
+    E -->|8. Xóa giỏ hàng| A
+    F -->|9. Cập nhật thông tin| C
 ```
 
 ### 4. Luồng xử lý chính:
@@ -328,6 +345,7 @@ sequenceDiagram
 | Functional Context | Mô tả |
 |-------------------|--------|
 | Xác thực khách hàng | Kiểm tra thông tin và quyền hạn của khách hàng |
+| Quản lý sản phẩm | Thêm/sửa/xóa và tìm kiếm sản phẩm |
 | Kiểm tra tồn kho | Xác minh số lượng sản phẩm có đủ để đáp ứng đơn hàng |
 | Quản lý giỏ hàng | Thêm/xóa sản phẩm và tính toán giá |
 | Tạo đơn hàng | Tạo và lưu trữ thông tin đơn hàng mới |
@@ -338,7 +356,7 @@ sequenceDiagram
 | Resource | Mô tả |
 |----------|--------|
 | Customer | Thông tin khách hàng và lịch sử mua hàng |
-| Product | Thông tin sản phẩm và số lượng tồn kho |
+| Product | Thông tin sản phẩm và danh mục |
 | Cart | Giỏ hàng và chi tiết sản phẩm |
 | Order | Thông tin đơn hàng và chi tiết sản phẩm |
 | Inventory | Quản lý số lượng tồn kho của sản phẩm |
@@ -366,9 +384,16 @@ sequenceDiagram
 ### 2. Product Service
 | Resource | Method | Endpoint | Mô tả |
 |----------|---------|-----------|--------|
-| Product | GET | /api/products/{id} | Lấy thông tin sản phẩm |
 | Product | GET | /api/products | Lấy danh sách sản phẩm |
+| Product | GET | /api/products/{id} | Lấy thông tin chi tiết sản phẩm |
+| Product | POST | /api/products | Thêm sản phẩm mới |
 | Product | PUT | /api/products/{id} | Cập nhật thông tin sản phẩm |
+| Product | DELETE | /api/products/{id} | Xóa sản phẩm |
+| Product | GET | /api/products/category/{categoryId} | Lấy sản phẩm theo danh mục |
+| Product | GET | /api/products/search | Tìm kiếm sản phẩm |
+| Product | POST | /api/products/{id}/images | Thêm hình ảnh sản phẩm |
+| Product | GET | /api/products/{id}/reviews | Lấy đánh giá sản phẩm |
+| Product | POST | /api/products/{id}/reviews | Thêm đánh giá sản phẩm |
 
 ### 3. Order Service
 | Resource | Method | Endpoint | Mô tả |
