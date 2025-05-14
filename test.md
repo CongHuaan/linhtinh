@@ -162,14 +162,13 @@ sequenceDiagram
     Gateway ->> Frontend: Product List
     Frontend ->> User: Display Products
 
-    %% === Add to Cart ===
-    User ->> Frontend: Add to Cart
-    Frontend ->> Gateway: POST /api/cart/add
-    Gateway ->> CartSvc: addToCart()
-    CartSvc ->> CartSvc: Save Item
-    CartSvc ->> Gateway: Updated Cart
-    Gateway ->> Frontend: Success
-    Frontend ->> User: Item Added
+    %% === View Cart ===
+    User ->> Frontend: View Cart
+    Frontend ->> Gateway: GET /api/cart/{customerId}
+    Gateway ->> CartSvc: getCart()
+    CartSvc ->> Gateway: Cart Details
+    Gateway ->> Frontend: Cart Details
+    Frontend ->> User: Display Cart
 
     %% === Place Order ===
     User ->> Frontend: Checkout
