@@ -370,12 +370,23 @@ sequenceDiagram
 ### Sơ đồ tương tác API:
 
 ```mermaid
-graph TD
-    A[Client] -->|1. POST /api/orders| B[Order Service]
-    B -->|2. POST /api/customers/validate| C[Customer Service]
-    B -->|3. GET /api/inventory/{skuCode}| D[Inventory Service]
-    B -->|4. PUT /api/inventory/{skuCode}| D
-    B -->|5. POST /api/notifications/order-confirmation| E[Notification Service]
+sequenceDiagram
+    participant Client
+    participant OrderService
+    participant CustomerService
+    participant InventoryService
+    participant NotificationService
+
+    Client->>OrderService: POST /api/orders
+    OrderService->>CustomerService: POST /api/customers/validate
+    CustomerService-->>OrderService: 200 OK
+    OrderService->>InventoryService: GET /api/inventory/{skuCode}
+    InventoryService-->>OrderService: 200 OK
+    OrderService->>InventoryService: PUT /api/inventory/{skuCode}
+    InventoryService-->>OrderService: 200 OK
+    OrderService->>NotificationService: POST /api/notifications/order-confirmation
+    NotificationService-->>OrderService: 202 Accepted
+    OrderService-->>Client: 201 Created
 ```
 
 ### Các điểm cần lưu ý:
