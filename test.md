@@ -140,6 +140,9 @@ graph LR
 ```
 
 ```mermaid
+Tôi sẽ cập nhật luồng sequence để sau khi xem giỏ hàng thì đặt hàng luôn, đơn giản hơn:
+
+```mermaid
 sequenceDiagram
     autonumber
 
@@ -147,28 +150,19 @@ sequenceDiagram
     participant Frontend
     participant Gateway
     participant CustomerSvc
-    participant ProductSvc
     participant CartSvc
     participant OrderSvc
     participant InventorySvc
     participant Kafka
     participant NotificationSvc
 
-    %% === Browse Products ===
-    User ->> Frontend: Browse Products
-    Frontend ->> Gateway: GET /api/products
-    Gateway ->> ProductSvc: getProducts()
-    ProductSvc ->> Gateway: Product List
-    Gateway ->> Frontend: Product List
-    Frontend ->> User: Display Products
-
-    %% === View Cart ===
+    %% === View Cart and Checkout ===
     User ->> Frontend: View Cart
     Frontend ->> Gateway: GET /api/cart/{customerId}
     Gateway ->> CartSvc: getCart()
     CartSvc ->> Gateway: Cart Details
     Gateway ->> Frontend: Cart Details
-    Frontend ->> User: Display Cart
+    Frontend ->> User: Display Cart with Checkout Option
 
     %% === Place Order ===
     User ->> Frontend: Checkout
@@ -205,6 +199,8 @@ sequenceDiagram
     OrderSvc ->> Gateway: Order Created
     Gateway ->> Frontend: Order Success
     Frontend ->> User: Order Confirmation
+```
+
 ```
 
 ## Scalability & Fault Tolerance
