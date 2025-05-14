@@ -56,146 +56,162 @@ Mỗi microservice được phát triển và triển khai độc lập, có cơ
 ## Sơ đồ
 
 ```mermaid
-graph LR
-    subgraph "User Interaction"
-        FE(Frontend)
+flowchart TB
+    %% Clients
+    subgraph "Front-end Applications"
+        Customer["Web/Mobile Application\n(Customers)"]
+        Admin["Admin Portal\n(Product Management)"]
     end
-
-    subgraph "Infrastructure"
-        GW(API Gateway)
-        Eureka(Eureka Server)
-        MySQL(MySQL Group)
-        kafka(Kafka)
-        Docker(Docker Environment)
-    end
-
-    subgraph "Microservices"
-        ProductSvc(Product Service)
-        OrderSvc(Order Service)
-        InventorySvc(Inventory Service)
-        CustomerSvc(Customer Service)
-        CartSvc(Cart Service)
-        NotificationSvc(Notification Service)
-    end
-
-    %% Interactions
-    FE --> GW
-    GW --> ProductSvc
-    GW --> OrderSvc
-    GW --> InventorySvc
-    GW --> CustomerSvc
-    GW --> CartSvc
-    GW --> NotificationSvc
-
-    ProductSvc -- Register/Discover --> Eureka
-    OrderSvc -- Register/Discover --> Eureka
-    InventorySvc -- Register/Discover --> Eureka
-    CustomerSvc -- Register/Discover --> Eureka
-    CartSvc -- Register/Discover --> Eureka
-    NotificationSvc -- Register/Discover --> Eureka
-    GW -- Register/Discover --> Eureka
-
-    %% Database Connections
-    ProductSvc -- JDBC --> MySQL_product(DB product_service)
-    OrderSvc -- JDBC --> MySQL_order(DB order_service)
-    InventorySvc -- JDBC --> MySQL_inventory(DB inventory_service)
-    CustomerSvc -- JDBC --> MySQL_customer(DB customer_service)
-    CartSvc -- JDBC --> MySQL_cart(DB cart_service)
     
-    %% Kafka Interactions
-    OrderSvc --> kafka
-    NotificationSvc --> kafka
-    OrderSvc -- Message Exchange --> NotificationSvc
-
-    %% Service-to-Service Communication
-    OrderSvc -- Verify Customer --> CustomerSvc
-    OrderSvc -- Check Stock --> InventorySvc
-    OrderSvc -- Remove Items --> CartSvc
-
-    %% Group DBs visually under MySQL
-    MySQL_product --> MySQL
-    MySQL_order --> MySQL
-    MySQL_inventory --> MySQL
-    MySQL_customer --> MySQL
-    MySQL_cart --> MySQL
-
-    %% Styled Components
-    style FE fill:#ff6666,stroke:#000000,stroke-width:2px
-    style GW fill:#3399ff,stroke:#000000,stroke-width:2px
-    style Eureka fill:#ff6633,stroke:#000000,stroke-width:2px
-    style MySQL fill:#3311ff,stroke:#000000,stroke-width:2px
-    style Docker fill:#ff3355,stroke:#000000,stroke-width:2px,stroke-dasharray: 5 5
-    style MySQL_product fill:#3377ff,stroke:#000000,stroke-width:2px
-    style MySQL_order fill:#3377ff,stroke:#000000,stroke-width:2px
-    style MySQL_inventory fill:#3377ff,stroke:#000000,stroke-width:2px
-    style MySQL_customer fill:#3377ff,stroke:#000000,stroke-width:2px
-    style MySQL_cart fill:#3377ff,stroke:#000000,stroke-width:2px
-    style kafka fill:#ff33cc,stroke:#000000,stroke-width:2px
-    style ProductSvc fill:#666666,stroke:#000000,stroke-width:2px
-    style OrderSvc fill:#666666,stroke:#000000,stroke-width:2px
-    style InventorySvc fill:#666666,stroke:#000000,stroke-width:2px
-    style CustomerSvc fill:#666666,stroke:#000000,stroke-width:2px
-    style CartSvc fill:#666666,stroke:#000000,stroke-width:2px
-    style NotificationSvc fill:#666666,stroke:#000000,stroke-width:2px
+    %% API Gateway & Service Discovery
+    subgraph "API Layer"
+        Gateway["API Gateway\n(Port: 8080)\nSpring Cloud Gateway"]
+        Eureka["Service Discovery\n(Port: 8761)\nEureka Server"]
+        
+        Gateway <--> Eureka
+    end
+    
+    %% Core Services
+    subgraph "Core Microservices"
+        direction TB
+        ProductService["Product Service\n(Port: 8081)\nManages product information"]
+        InventoryService["Inventory Service\n(Port: 8082)\nManages product stock"]
+        OrderService["Order Service\n(Port: 8083)\nProcesses customer orders"]
+        CustomerService["Customer Service\n(Port: 8085)\nManages user accounts"]
+        CartService["Cart Service\n(Port: 8087)\nManages shopping carts"]
+        NotificationService["Notification Service\n(Port: 8086)\nSends email notifications"]
+    end
+    
+    %% Databases
+    subgraph "Data Layer"
+        ProductDB[(Product DB\nMySQL)]
+        InventoryDB[(Inventory DB\nMySQL)]
+        OrderDB[(Order DB\nMySQL)]
+        CustomerDB[(Customer DB\nMySQL)]
+        CartDB[(Cart DB\nMySQL)]
+    end
+    
+    %% Messaging
+    subgraph "Messaging Layer"
+        Kafka["Kafka\nEvent Messaging"]
+    end
+    
+    %% Client to Gateway Connections
+    Customer --> |HTTP Requests| Gateway
+    Admin --> |HTTP Requests| Gateway
+    
+    %% Gateway to Services Connections
+    Gateway --> |Routes Requests| ProductService
+    Gateway --> |Routes Requests| InventoryService
+    Gateway --> |Routes Requests| OrderService
+    Gateway --> |Routes Requests| CustomerService
+    Gateway --> |Routes Requests| CartService
+    Gateway --> |Routes Requests| NotificationService
+    
+    %% Service Registration
+    ProductService --> |Registers with| Eureka
+    InventoryService --> |Registers with| Eureka
+    OrderService --> |Registers with| Eureka
+    CustomerService --> |Registers with| Eureka
+    CartService --> |Registers with| Eureka
+    NotificationService --> |Registers with| Eureka
+    
+    %% Service to Database Connections
+    ProductService --> |JDBC| ProductDB
+    InventoryService --> |JDBC| InventoryDB
+    OrderService --> |JDBC| OrderDB
+    CustomerService --> |JDBC| CustomerDB
+    CartService --> |JDBC| CartDB
+    
+    %% Inter-Service Communication (Synchronous)
+    OrderService --> |Feign Client| CustomerService
+    OrderService --> |Feign Client| InventoryService
+    OrderService --> |Feign Client| CartService
+    
+    %% Asynchronous Communication
+    OrderService --> |Publishes Events| Kafka
+    Kafka --> |Consumes Events| NotificationService
+    
+    %% Styling
+    classDef frontEnd fill:#ff9999,stroke:#333,stroke-width:2px;
+    classDef gateway fill:#66b3ff,stroke:#333,stroke-width:2px;
+    classDef eureka fill:#ff9966,stroke:#333,stroke-width:2px;
+    classDef service fill:#b3b3b3,stroke:#333,stroke-width:2px;
+    classDef database fill:#80b3ff,stroke:#333,stroke-width:2px;
+    classDef messaging fill:#ff66cc,stroke:#333,stroke-width:2px;
+    
+    class Customer,Admin frontEnd;
+    class Gateway gateway;
+    class Eureka eureka;
+    class ProductService,InventoryService,OrderService,CustomerService,CartService,NotificationService service;
+    class ProductDB,InventoryDB,OrderDB,CustomerDB,CartDB database;
+    class Kafka messaging;
 ```
 
 ```mermaid
 sequenceDiagram
     autonumber
-
-    actor User
-    participant Frontend
-    participant Gateway
-    participant CustomerSvc
-    participant CartSvc
-    participant OrderSvc
-    participant InventorySvc
-    participant Kafka
-    participant NotificationSvc
-
-    %% === View Cart and Checkout ===
-    User ->> Frontend: View Cart
-    Frontend ->> Gateway: GET /api/cart/{customerId}
-    Gateway ->> CartSvc: getCart()
-    CartSvc ->> Gateway: Cart Details
-    Gateway ->> Frontend: Cart Details
-    Frontend ->> User: Display Cart with Checkout Option
-
-    %% === Place Order ===
-    User ->> Frontend: Checkout
-    Frontend ->> Gateway: POST /api/orders
-    Gateway ->> OrderSvc: placeOrder()
     
-    %% === Verify Customer ===
-    OrderSvc ->> CustomerSvc: validateCustomer()
-    CustomerSvc ->> OrderSvc: Customer Valid
+    actor Customer as Customer
+    participant Frontend as Web/Mobile App
+    participant Gateway as API Gateway
+    participant ProductSvc as Product Service
+    participant CartSvc as Cart Service
+    participant CustomerSvc as Customer Service
+    participant OrderSvc as Order Service
+    participant InventorySvc as Inventory Service
+    participant Kafka as Kafka
+    participant NotificationSvc as Notification Service
     
-    %% === Check Inventory ===
-    OrderSvc ->> InventorySvc: checkStock()
-    InventorySvc ->> OrderSvc: Stock Available
+    %% Browse Products Sequence
+    Customer->>+Frontend: Browse Products
+    Frontend->>+Gateway: GET /api/products
+    Gateway->>+ProductSvc: getProducts()
+    ProductSvc-->>-Gateway: Return Product List
+    Gateway-->>-Frontend: Product Response
+    Frontend-->>-Customer: Display Products
     
-    %% === Create Order ===
-    OrderSvc ->> OrderSvc: Create Order
+    %% View Cart Sequence
+    Customer->>+Frontend: View Cart
+    Frontend->>+Gateway: GET /api/cart/{customerId}
+    Gateway->>+CartSvc: getCart()
+    CartSvc-->>-Gateway: Return Cart Details
+    Gateway-->>-Frontend: Cart Response
+    Frontend-->>-Customer: Display Cart with Checkout Option
     
-    %% === Update Inventory ===
-    OrderSvc ->> InventorySvc: updateStock()
-    InventorySvc ->> InventorySvc: Decrease Quantity
+    %% Checkout Sequence
+    Customer->>+Frontend: Click Checkout
+    Frontend->>+Gateway: POST /api/orders
+    Gateway->>+OrderSvc: placeOrder(orderId)
     
-    %% === Remove from Cart ===
-    OrderSvc ->> CartSvc: removeFromCart()
-    CartSvc ->> CartSvc: Remove Item
+    %% Order Service Internal Processing
+    OrderSvc->>+CustomerSvc: validateCustomer(customerId)
+    CustomerSvc-->>-OrderSvc: Customer Validation Response
     
-    %% === Send Order Event ===
-    OrderSvc ->> Kafka: Publish OrderPlacedEvent
+    OrderSvc->>+InventorySvc: checkStock(skuCode, quantity)
+    InventorySvc-->>-OrderSvc: Stock Availability Response
     
-    %% === Process Notification ===
-    Kafka ->> NotificationSvc: Consume OrderPlacedEvent
-    NotificationSvc ->> NotificationSvc: Send Email
+    OrderSvc->>OrderSvc: Create Order Record
     
-    %% === Return Result ===
-    OrderSvc ->> Gateway: Order Created
-    Gateway ->> Frontend: Order Success
-    Frontend ->> User: Order Confirmation
+    OrderSvc->>+InventorySvc: updateStock(skuCode, quantity)
+    InventorySvc->>InventorySvc: Update Inventory Record
+    InventorySvc-->>-OrderSvc: Inventory Update Response
+    
+    OrderSvc->>+CartSvc: removeFromCart(customerId, productId)
+    CartSvc->>CartSvc: Remove Items from Cart
+    CartSvc-->>-OrderSvc: Cart Update Response
+    
+    %% Asynchronous Event Publishing
+    OrderSvc->>+Kafka: Publish OrderPlacedEvent
+    OrderSvc-->>-Gateway: Order Creation Success
+    Gateway-->>-Frontend: Order Confirmation Response
+    Frontend-->>-Customer: Display Order Confirmation
+    
+    %% Asynchronous Event Processing
+    Kafka-->>+NotificationSvc: Consume OrderPlacedEvent
+    NotificationSvc->>NotificationSvc: Prepare Email Content
+    NotificationSvc->>NotificationSvc: Send Confirmation Email
+    NotificationSvc-->>-Kafka: Acknowledge Message
 ```
 
 ## Scalability & Fault Tolerance
