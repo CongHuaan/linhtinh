@@ -1,241 +1,528 @@
-# 📄 Kiến Trúc Hệ Thống – Hệ Thống Đặt hàng Theo Kiến Trúc Microservices
+# 📊 Microservices System - Analysis and Design
 
----
+## 1: Các bước thiết kế dịch vụ trong kiến trúc hướng dịch vụ (SOA)
 
-## 1. Tổng Quan
+Bước 1: Phân tách quy trình nghiệp vụ
 
-### Mục đích của hệ thống microservices
+Bước 2: Loại bỏ các hành động không phù hợp
 
-Hệ thống Đặt hàng được xây dựng theo kiến trúc Microservices nhằm phục vụ nhu cầu mua sắm trực tuyến với khả năng xử lý lượng lớn người dùng, sản phẩm và đơn hàng. Việc áp dụng kiến trúc *Microservices* mang lại nhiều lợi ích vượt trội như: khả năng mở rộng linh hoạt, triển khai độc lập từng thành phần, dễ bảo trì và tích hợp với các hệ thống thanh toán, vận chuyển bên ngoài.
+Bước 3: Xác định các dịch vụ thực thể (Entity Service Candidates)
 
-Mỗi dịch vụ sẽ chịu trách nhiệm cho một chức năng duy nhất, tuân thủ nguyên tắc *Single Responsibility* và đảm bảo khả năng *mở rộng theo chiều ngang*.
+Bước 4: Xác định logic riêng của quy trình
 
-### Các thành phần chính và chức năng
+Bước 5: Xác định tài nguyên
 
-| Thành phần                   | Chức năng chính                                                                                |
-| ---------------------------- | ---------------------------------------------------------------------------------------------- |
-| *Discovery Server (Eureka)* | Đăng ký và phát hiện các dịch vụ, cho phép các dịch vụ tìm kiếm và giao tiếp với nhau. |
-| *API Gateway*              | Cửa ngõ duy nhất của hệ thống, tiếp nhận và định tuyến các yêu cầu đến từng service thích hợp. |
-| *Product Service*          | Quản lý thông tin sản phẩm, danh mục, giá cả và hình ảnh. |
-| *Inventory Service*        | Quản lý tồn kho, cập nhật số lượng khi có đơn hàng mới. |
-| *Order Service*            | Xử lý đơn hàng, từ tạo đơn đến các trạng thái xử lý. |
-| *Customer Service*         | Quản lý thông tin khách hàng, tài khoản, địa chỉ giao hàng. |
-| *Cart Service*             | Quản lý giỏ hàng của người dùng. |
-| *Notification Service*     | Gửi thông báo đến khách hàng qua email hoặc các kênh khác. |
-| *MySQL Database*           | Mỗi service có cơ sở dữ liệu MySQL riêng biệt, đảm bảo tính phân tách dữ liệu. |
+Bước 6: Gắn kết khả năng dịch vụ với tài nguyên và phương thức
 
----
+Bước 7: Áp dụng hướng dịch vụ (Apply Service-Orientation)
 
-## 2. Các Thành Phần Hệ Thống
+Bước 8: Xác định các dịch vụ phối hợp (Composition Candidates)
 
-### 2.1. Discovery Server (Eureka)
+Bước 9: Phân tích yêu cầu xử lý
 
-- Đăng ký các dịch vụ khi chúng khởi động.
-- Cho phép các dịch vụ tìm kiếm và giao tiếp với nhau.
-- Theo dõi trạng thái hoạt động (health) của các dịch vụ.
-- Cung cấp cơ chế cân bằng tải (load balancing) đơn giản.
+## 2: Case Study: Hệ thống Thương mại Điện tử
 
-### 2.2. API Gateway
+### Vấn đề:
+Công ty thương mại điện tử áp dụng kiến trúc SOA để tích hợp các hệ thống quản lý sản phẩm, đơn hàng, giỏ hàng và thông báo.
+Trọng tâm là xây dựng các dịch vụ thực thể (Entity Services) để quản lý toàn bộ quy trình mua sắm từ khi khách hàng xem sản phẩm đến khi hoàn thành đơn hàng.
+Yêu cầu:
 
-- Đóng vai trò là điểm vào duy nhất cho tất cả các yêu cầu từ client.
-- Định tuyến các yêu cầu HTTP đến các microservice phù hợp.
-- Xử lý xác thực và ủy quyền người dùng.
-- Thực hiện bảo mật, giới hạn tỷ lệ (rate limiting) và ghi nhật ký.
-- Tích hợp với Discovery Server để định tuyến động.
+  - Triển khai hệ thống với khả năng mở rộng cao để đáp ứng lượng người dùng lớn
+  - Sử dụng Docker container và Kubernetes để đảm bảo khả năng mở rộng và triển khai linh hoạt
+  - Hệ thống phải đảm bảo tính nhất quán dữ liệu giữa các dịch vụ, xử lý giao dịch đúng đắn và gửi thông báo kịp thời
 
-### 2.3. Product Service
+### Giải pháp:
+Nhóm kiến trúc SOA mô hình hóa quy trình Thương mại Điện tử sử dụng các dịch vụ REST, chia thành các dịch vụ chính:
 
-- Quản lý danh mục sản phẩm và thông tin chi tiết.
-- Cung cấp API để tìm kiếm, lọc và hiển thị sản phẩm.
-- Xử lý hình ảnh sản phẩm và thuộc tính sản phẩm.
-- Cập nhật thông tin sản phẩm như giá, mô tả, đặc điểm.
+  - *Product Service – Quản lý sản phẩm (GET/POST /products)*
+    - Quản lý thông tin sản phẩm, danh mục, giá cả
+  - *Cart Service – Quản lý giỏ hàng (GET/POST /cart)*
+    - Xử lý thêm/xóa sản phẩm vào giỏ hàng
+  - *Order Service – Quản lý đơn hàng (GET/POST /orders)*
+    - Xử lý tạo và quản lý đơn hàng
+  - *Inventory Service – Quản lý kho (GET/POST /inventory)*
+    - Kiểm tra và cập nhật số lượng sản phẩm trong kho
+  - *Customer Service – Quản lý khách hàng (GET/POST /customers)*
+    - Quản lý thông tin và lịch sử mua hàng của khách hàng
+  - *Notification Service – Gửi thông báo (POST /notifications)*
+    - Gửi thông báo qua email và các kênh khác
 
-### 2.4. Inventory Service
+#### Các bước hiện tại: 
 
-- Theo dõi số lượng tồn kho của từng sản phẩm.
-- Cập nhật số lượng khi có đơn hàng mới hoặc hoàn trả.
-- Cảnh báo khi hàng sắp hết.
-- Giao tiếp với Order Service để đảm bảo chỉ bán sản phẩm có sẵn.
+# Thiết kế dịch vụ trong kiến trúc hướng dịch vụ (SOA) - Nghiệp vụ Đặt hàng
 
-### 2.5. Order Service
+## Bước 1: Phân tách quy trình nghiệp vụ Đặt hàng
+1. Bắt đầu nhận đơn đặt hàng khi khách hàng chọn sản phẩm và xác nhận mua hàng
+2. Kiểm tra người dùng: xác minh tài khoản và quyền hạn khách hàng
+3. Nhận thông tin khách hàng (tên, địa chỉ, liên hệ…)
+4. Nhận thông tin sản phẩm (tên sản phẩm, số lượng…)
+5. Kiểm tra tính hợp lệ của yêu cầu đặt hàng (số lượng, thời gian giao hàng…)
+6. Kiểm tra kho: xác minh còn đủ số lượng sản phẩm không
+7. Nếu không đủ số lượng, dừng quy trình và thông báo cho khách hàng
+8. Nếu đủ số lượng, lưu đơn hàng vào database
+9. Cập nhật lại số lượng sản phẩm trong kho
+10. Xóa sản phẩm đã đặt khỏi giỏ hàng của khách hàng
+11. Gửi email xác nhận đơn hàng thành công cho khách hàng
 
-- Xử lý việc tạo và quản lý đơn hàng.
-- Cập nhật trạng thái đơn hàng trong suốt quy trình.
-- Tính toán giá, thuế và chi phí vận chuyển.
-- Gửi thông báo đến Notification Service khi trạng thái đơn hàng thay đổi.
-- Giao tiếp với Inventory Service để cập nhật tồn kho.
+## Bước 2: Loại bỏ các hành động không phù hợp
+- ~Bắt đầu nhận đơn đặt hàng khi khách hàng chọn sản phẩm và xác nhận mua hàng~
+- ~Nhận thông tin khách hàng (tên, địa chỉ, liên hệ…)~
+- ~Nhận thông tin sản phẩm (tên sản phẩm, số lượng…)~
 
-### 2.6. Customer Service
+Các bước còn lại:
+- Kiểm tra người dùng: xác minh tài khoản và quyền hạn khách hàng
+- Kiểm tra tính hợp lệ của yêu cầu đặt hàng (số lượng, thời gian giao hàng…)
+- Kiểm tra kho: xác minh còn đủ số lượng sản phẩm không
+- Nếu không đủ số lượng, dừng quy trình và thông báo cho khách hàng
+- Nếu đủ số lượng, lưu đơn hàng vào database
+- Cập nhật lại số lượng sản phẩm trong kho
+- Xóa sản phẩm đã đặt khỏi giỏ hàng của khách hàng
+- Gửi email xác nhận đơn hàng thành công cho khách hàng
 
-- Quản lý thông tin người dùng, hồ sơ và xác thực.
-- Lưu trữ địa chỉ giao hàng và thông tin thanh toán.
-- Xử lý đăng ký, đăng nhập và quản lý phiên.
-- Theo dõi lịch sử đơn hàng của khách hàng.
+*Phân tích:*
+- Các bước bị loại bỏ là thao tác nhập liệu của người dùng, thuộc về giao diện hoặc client, không phải logic dịch vụ.
+- Các bước còn lại là logic nghiệp vụ, có thể tự động hóa và đóng gói thành các dịch vụ thực thể (Order, Inventory, Cart, Notification, Customer).
 
-### 2.7. Cart Service
+## Bước 3: Xác định các dịch vụ thực thể (Entity Service Candidates)
 
-- Quản lý giỏ hàng cho người dùng đã đăng nhập và chưa đăng nhập.
-- Thêm, cập nhật và xóa sản phẩm trong giỏ hàng.
-- Tính toán tổng giá trị giỏ hàng.
-- Chuyển đổi giỏ hàng thành đơn hàng.
+### 1. Phân tích các thực thể chính trong nghiệp vụ đặt hàng:
 
-### 2.8. Notification Service
+#### 1.1. Thực thể Order (Đơn hàng)
+- **Mục đích**: Lưu trữ thông tin đơn hàng
+- **Thuộc tính chính**:
+  - id: Định danh duy nhất (Long)
+  - orderNumber: Mã đơn hàng (String)
+  - customerId: Mã khách hàng (Long)
+  - productId: Mã sản phẩm (Long)
+  - quantity: Số lượng (Integer)
+  - price: Giá (BigDecimal)
+  - status: Trạng thái đơn hàng (String)
+  - createdAt: Thời gian tạo (Date)
+  - updatedAt: Thời gian cập nhật (Date)
 
-- Gửi email xác nhận đơn hàng, cập nhật trạng thái.
-- Thông báo về giảm giá, khuyến mãi và sản phẩm mới.
-- Lưu trữ mẫu thông báo và lịch sử gửi.
-- Xử lý hàng đợi thông báo để đảm bảo độ tin cậy.
+#### 1.2. Thực thể Product (Sản phẩm)
+- **Mục đích**: Quản lý thông tin sản phẩm
+- **Thuộc tính chính**:
+  - id: Định danh duy nhất (Long)
+  - name: Tên sản phẩm (String)
+  - skuCode: Mã SKU (String)
+  - price: Giá (BigDecimal)
+  - stock: Số lượng tồn kho (Integer)
+  - description: Mô tả (String)
 
-### 2.9. Cơ sở dữ liệu MySQL
+#### 1.3. Thực thể Customer (Khách hàng)
+- **Mục đích**: Quản lý thông tin khách hàng
+- **Thuộc tính chính**:
+  - id: Định danh duy nhất (Long)
+  - name: Tên khách hàng (String)
+  - email: Email (String)
+  - phone: Số điện thoại (String)
+  - address: Địa chỉ (String)
 
-| Dịch vụ | Cơ sở dữ liệu | Nội dung lưu trữ |
-| ------- | ------------- | ---------------- |
-| Product Service | product-db | Thông tin sản phẩm, danh mục, giá cả, hình ảnh |
-| Inventory Service | inventory-db | Số lượng tồn kho, thay đổi tồn kho, vị trí |
-| Order Service | order-db | Đơn hàng, chi tiết đơn hàng, trạng thái, lịch sử |
-| Customer Service | customer-db | Thông tin khách hàng, tài khoản, địa chỉ |
-| Cart Service | cart-db | Giỏ hàng, sản phẩm trong giỏ, số lượng |
-| Notification Service | notification-db | Mẫu thông báo, lịch sử gửi, trạng thái |
+### 2. Xác định các dịch vụ thực thể:
 
----
+#### 2.1. Order Service
+- **Mục đích**: Quản lý toàn bộ quy trình đặt hàng
+- **Các chức năng chính**:
+  1. Tạo đơn hàng mới
+  2. Xác thực thông tin đơn hàng
+  3. Cập nhật trạng thái đơn hàng
+  4. Lấy thông tin đơn hàng
+  5. Hủy đơn hàng
 
-## 3. Giao Tiếp
+#### 2.2. Inventory Service
+- **Mục đích**: Quản lý tồn kho sản phẩm
+- **Các chức năng chính**:
+  1. Kiểm tra số lượng tồn kho
+  2. Cập nhật số lượng tồn kho
+  3. Cảnh báo khi số lượng thấp
+  4. Lấy thông tin tồn kho
 
-### 3.1. Giao tiếp giữa các dịch vụ
+#### 2.3. Customer Service
+- **Mục đích**: Quản lý thông tin khách hàng
+- **Các chức năng chính**:
+  1. Xác thực thông tin khách hàng
+  2. Lấy thông tin chi tiết khách hàng
+  3. Cập nhật thông tin khách hàng
+  4. Kiểm tra lịch sử mua hàng
 
-- Các dịch vụ giao tiếp chủ yếu thông qua *HTTP REST API*.
-- Tất cả request từ client đều đi qua API Gateway để đảm bảo khả năng kiểm soát và giám sát tập trung.
-- Giao tiếp không đồng bộ giữa Order Service và Notification Service thông qua *Apache Kafka*.
-- Discovery Server (Eureka) giúp các service tìm thấy nhau mà không cần biết IP tĩnh.
+#### 2.4. Notification Service
+- **Mục đích**: Gửi thông báo cho khách hàng
+- **Các chức năng chính**:
+  1. Gửi email xác nhận đơn hàng
+  2. Gửi thông báo trạng thái đơn hàng
+  3. Gửi thông báo khi có vấn đề với đơn hàng
 
-### 3.2. API và Endpoints
-
-- Mỗi service cung cấp các RESTful API với định dạng JSON.
-- API Gateway xác thực và định tuyến requests.
-- Các endpoints được ghi chép đầy đủ theo chuẩn OpenAPI/Swagger.
-
-### 3.3. Tính bảo mật và tin cậy
-
-- JWT (JSON Web Token) cho xác thực và ủy quyền.
-- HTTPS cho tất cả các kết nối.
-- Giới hạn tỷ lệ truy cập (Rate limiting) để ngăn chặn tấn công DDoS.
-- Circuit breaker để xử lý lỗi dịch vụ và tăng khả năng phục hồi.
-
----
-
-## 4. Luồng Dữ Liệu
-
-### 4.1. Luồng xử lý chính:
-
-1. Khách hàng truy cập hệ thống thông qua Web/Mobile App.
-2. Yêu cầu được gửi đến API Gateway, xác thực và định tuyến đến service phù hợp.
-3. **Duyệt và Tìm kiếm sản phẩm:**
-   - API Gateway → Product Service → Hiển thị sản phẩm cho khách hàng.
-4. **Thêm vào giỏ hàng:**
-   - API Gateway → Cart Service → Cập nhật giỏ hàng.
-   - Cart Service → Product Service → Kiểm tra thông tin sản phẩm.
-   - Cart Service → Inventory Service → Kiểm tra tồn kho.
-5. **Đặt hàng:**
-   - API Gateway → Order Service → Tạo đơn hàng mới.
-   - Order Service → Customer Service → Xác nhận thông tin khách hàng.
-   - Order Service → Inventory Service → Cập nhật tồn kho.
-   - Order Service → Kafka → Notification Service → Gửi email xác nhận đơn hàng.
-6. **Theo dõi đơn hàng:**
-   - API Gateway → Order Service → Truy vấn trạng thái đơn hàng.
-   - Order Service → Notification Service → Thông báo cập nhật trạng thái.
-
-### 4.2. Xử lý dữ liệu không đồng bộ
-
-- Kafka xử lý giao tiếp không đồng bộ giữa Order Service và Notification Service.
-- Event-driven architecture cho các thay đổi trạng thái đơn hàng.
-- Retry mechanism cho các thao tác quan trọng như cập nhật tồn kho.
-
----
-
-## 5. Sơ Đồ
-
-### 5.1. Sơ đồ kiến trúc tổng thể
+### 3. Mối quan hệ giữa các dịch vụ:
 
 ```mermaid
 graph TD
-    Client[Web/Mobile Client] --> Gateway[API Gateway]
-    Gateway --> DS[Discovery Server/Eureka]
-    Gateway --> PS[Product Service]
-    Gateway --> IS[Inventory Service]
-    Gateway --> OS[Order Service]
-    Gateway --> CS[Customer Service]
-    Gateway --> CaS[Cart Service]
-    Gateway --> NS[Notification Service]
-    
-    PS --> PDB[(Product DB)]
-    IS --> IDB[(Inventory DB)]
-    OS --> ODB[(Order DB)]
-    CS --> CDB[(Customer DB)]
-    CaS --> CaDB[(Cart DB)]
-    NS --> NDB[(Notification DB)]
-    
-    OS --> Kafka[Kafka]
-    Kafka --> NS
-    
-    PS -.-> DS
-    IS -.-> DS
-    OS -.-> DS
-    CS -.-> DS
-    CaS -.-> DS
-    NS -.-> DS
-    
-    OS --> IS
-    CaS --> PS
-    CaS --> IS
-    OS --> CS
+    A[Order Service] -->|1. Kiểm tra khách hàng| B[Customer Service]
+    A -->|2. Kiểm tra tồn kho| C[Inventory Service]
+    A -->|3. Gửi thông báo| D[Notification Service]
+    C -->|4. Cập nhật tồn kho| A
+    B -->|5. Cập nhật lịch sử| A
 ```
 
-### 5.2. Luồng xử lý đơn hàng
+### 4. Luồng xử lý chính:
+
+1. **Xác thực thông tin**:
+   - Order Service gọi Customer Service để xác thực thông tin khách hàng
+   - Order Service gọi Inventory Service để kiểm tra tồn kho
+
+2. **Tạo đơn hàng**:
+   - Order Service tạo đơn hàng mới
+   - Order Service cập nhật trạng thái đơn hàng
+
+3. **Cập nhật tồn kho**:
+   - Order Service gọi Inventory Service để cập nhật số lượng tồn kho
+   - Inventory Service xác nhận việc cập nhật
+
+4. **Gửi thông báo**:
+   - Order Service gọi Notification Service để gửi email xác nhận
+   - Notification Service gửi thông báo cho khách hàng
+
+### 5. Các điểm tích hợp:
+
+1. **Giao tiếp đồng bộ**:
+   - Sử dụng REST API với Feign Client
+   - Giao tiếp trực tiếp giữa các service
+
+2. **Giao tiếp bất đồng bộ**:
+   - Sử dụng Kafka để xử lý sự kiện
+   - Xử lý các tác vụ không cần phản hồi ngay lập tức
+
+3. **Service Discovery**:
+   - Sử dụng Eureka để quản lý và tìm kiếm service
+   - Đảm bảo tính sẵn sàng của hệ thống
+
+4. **API Documentation**:
+   - Sử dụng OpenAPI/Swagger để tài liệu hóa API
+   - Dễ dàng tích hợp và sử dụng
+
+## Bước 4: Xác định logic riêng của quy trình
+
+### Đánh giá khả năng tách thành dịch vụ (Service Capability Candidates)
+
+#### 1. Xác thực thông tin khách hàng và kiểm tra tồn kho
+- **Tính đặc thù quy trình**: 
+  - Xác thực khách hàng là bước đầu tiên trong mọi giao dịch
+  - Kiểm tra tồn kho là yêu cầu bắt buộc trước khi tạo đơn hàng
+- **Tính độc lập**:
+  - Customer Service có thể hoạt động độc lập, phục vụ nhiều nghiệp vụ khác
+  - Inventory Service quản lý tồn kho riêng biệt, không phụ thuộc vào đơn hàng
+- **Quyết định**: 
+  - Giữ nguyên Customer Service và Inventory Service như các dịch vụ độc lập
+  - Order Service sẽ gọi các service này thông qua REST API
+
+#### 2. Tạo và quản lý đơn hàng
+- **Tính đặc thù**:
+  - Đây là nghiệp vụ cốt lõi của hệ thống
+  - Bao gồm nhiều bước xử lý phức tạp
+- **Tính nghiệp vụ**:
+  - Cần đảm bảo tính nhất quán dữ liệu
+  - Xử lý giao dịch (transaction) giữa nhiều service
+- **Tách biệt trách nhiệm**:
+  - Order Service chỉ tập trung vào quản lý đơn hàng
+  - Không chứa logic xử lý tồn kho hay thông báo
+- **Quyết định**:
+  - Tách thành Order Service riêng biệt
+  - Sử dụng Saga pattern để đảm bảo tính nhất quán dữ liệu
+
+#### 3. Gửi thông báo xác nhận đơn hàng
+- **Tính tái sử dụng cao**:
+  - Có thể dùng cho nhiều loại thông báo khác nhau
+  - Hỗ trợ nhiều kênh thông báo (email, SMS, push notification)
+- **Tách biệt rõ ràng**:
+  - Không liên quan đến logic xử lý đơn hàng
+  - Chỉ chịu trách nhiệm gửi thông báo
+- **Quyết định**:
+  - Tách thành Notification Service riêng biệt
+  - Sử dụng event-driven architecture để xử lý thông báo bất đồng bộ
+
+### Phân tích chi tiết các dịch vụ:
+
+#### 1. Order Service
+- **Trách nhiệm chính**:
+  - Tạo và quản lý đơn hàng
+  - Điều phối luồng xử lý đơn hàng
+  - Đảm bảo tính nhất quán dữ liệu
+- **Các điểm tích hợp**:
+  - Gọi Customer Service để xác thực
+  - Gọi Inventory Service để kiểm tra tồn kho
+  - Gửi event đến Notification Service
+
+#### 2. Inventory Service
+- **Trách nhiệm chính**:
+  - Quản lý tồn kho sản phẩm
+  - Cập nhật số lượng tồn kho
+  - Cảnh báo khi số lượng thấp
+- **Các điểm tích hợp**:
+  - Cung cấp API cho Order Service
+  - Gửi event khi số lượng thấp
+
+#### 3. Customer Service
+- **Trách nhiệm chính**:
+  - Quản lý thông tin khách hàng
+  - Xác thực thông tin đăng nhập
+  - Quản lý lịch sử mua hàng
+- **Các điểm tích hợp**:
+  - Cung cấp API cho Order Service
+  - Cập nhật lịch sử mua hàng
+
+#### 4. Notification Service
+- **Trách nhiệm chính**:
+  - Gửi thông báo qua nhiều kênh
+  - Quản lý template thông báo
+  - Theo dõi trạng thái gửi thông báo
+- **Các điểm tích hợp**:
+  - Nhận event từ Order Service
+  - Gửi thông báo qua các kênh khác nhau
+
+### Sơ đồ tương tác giữa các dịch vụ:
 
 ```mermaid
 sequenceDiagram
-    participant Customer
-    participant Gateway as API Gateway
-    participant Cart as Cart Service
-    participant Order as Order Service
-    participant Inventory as Inventory Service
-    participant Kafka
-    participant Notification as Notification Service
-    
-    Customer->>Gateway: Đặt hàng (Checkout)
-    Gateway->>Cart: Lấy thông tin giỏ hàng
-    Cart-->>Gateway: Thông tin giỏ hàng
-    Gateway->>Order: Tạo đơn hàng
-    Order->>Inventory: Kiểm tra & cập nhật tồn kho
-    Inventory-->>Order: Xác nhận tồn kho
-    Order-->>Gateway: Xác nhận đơn hàng
-    Gateway-->>Customer: Thông báo đặt hàng thành công
-    Order->>Kafka: Sự kiện đơn hàng đã tạo
-    Kafka->>Notification: Thông báo đơn hàng mới
-    Notification->>Customer: Gửi email xác nhận đơn hàng
+    participant Client
+    participant OrderService
+    participant CustomerService
+    participant InventoryService
+    participant NotificationService
+
+    Client->>OrderService: Đặt hàng
+    OrderService->>CustomerService: Xác thực khách hàng
+    CustomerService-->>OrderService: Kết quả xác thực
+    OrderService->>InventoryService: Kiểm tra tồn kho
+    InventoryService-->>OrderService: Kết quả kiểm tra
+    OrderService->>OrderService: Tạo đơn hàng
+    OrderService->>InventoryService: Cập nhật tồn kho
+    OrderService->>NotificationService: Gửi thông báo
+    NotificationService-->>Client: Gửi email xác nhận
 ```
 
----
+## Bước 5: Xác định tài nguyên
 
-## 6. Khả Năng Mở Rộng & Chịu Lỗi
+### 1. List Functional Contexts (Liệt kê các ngữ cảnh chức năng)
+*Ngữ cảnh chức năng chính:*
+| Functional Context | Mô tả |
+|-------------------|--------|
+| Xác thực khách hàng | Kiểm tra thông tin và quyền hạn của khách hàng |
+| Kiểm tra tồn kho | Xác minh số lượng sản phẩm có đủ để đáp ứng đơn hàng |
+| Tạo đơn hàng | Tạo và lưu trữ thông tin đơn hàng mới |
+| Cập nhật tồn kho | Giảm số lượng sản phẩm trong kho sau khi đặt hàng |
+| Gửi thông báo | Gửi email xác nhận đơn hàng cho khách hàng |
 
-### 6.1. Khả năng mở rộng
+### 2. Xác định và phân loại Resources
+| Resource | Mô tả |
+|----------|--------|
+| Customer | Thông tin khách hàng và lịch sử mua hàng |
+| Product | Thông tin sản phẩm và số lượng tồn kho |
+| Order | Thông tin đơn hàng và chi tiết sản phẩm |
+| Inventory | Quản lý số lượng tồn kho của sản phẩm |
+| Notification | Quản lý và gửi thông báo cho khách hàng |
 
-- *Scale theo chiều ngang* bằng cách nhân bản từng service.
-- Cân bằng tải (load balancing) qua Eureka và Spring Cloud.
-- Sharding cơ sở dữ liệu cho các dịch vụ xử lý dữ liệu lớn (như Product, Order).
-- Caching với Redis để giảm tải truy vấn DB cho các dữ liệu thường xuyên đọc.
+### 3. Mapping Business Entities to Resources
+| Business Entity | Resource tương ứng |
+|-----------------|-------------------|
+| Customer | /api/customers |
+| Product | /api/products |
+| Order | /api/orders |
+| Inventory | /api/inventory |
+| Notification | /api/notifications |
 
-### 6.2. Chịu lỗi và xử lý lỗi
+## Bước 6: Gắn kết khả năng dịch vụ với tài nguyên và phương thức
 
-- *Circuit Breaker* pattern (Hystrix/Resilience4j) để ngăn cascade failures.
-- Retry mechanisms cho các thao tác quan trọng.
-- Health checks và tự động khôi phục dịch vụ.
-- Distributed tracing để theo dõi và gỡ lỗi requests xuyên suốt hệ thống.
-- Fallback strategies khi dịch vụ không khả dụng.
+### 1. Customer Service
+| Resource | Method | Endpoint | Mô tả |
+|----------|---------|-----------|--------|
+| Customer | GET | /api/customers/{id} | Lấy thông tin khách hàng |
+| Customer | POST | /api/customers/validate | Xác thực thông tin khách hàng |
+| Customer | PUT | /api/customers/{id}/history | Cập nhật lịch sử mua hàng |
 
----
+### 2. Product Service
+| Resource | Method | Endpoint | Mô tả |
+|----------|---------|-----------|--------|
+| Product | GET | /api/products/{id} | Lấy thông tin sản phẩm |
+| Product | GET | /api/products | Lấy danh sách sản phẩm |
+| Product | PUT | /api/products/{id} | Cập nhật thông tin sản phẩm |
 
-## 7. Kết Luận
+### 3. Order Service
+| Resource | Method | Endpoint | Mô tả |
+|----------|---------|-----------|--------|
+| Order | POST | /api/orders | Tạo đơn hàng mới |
+| Order | GET | /api/orders/{id} | Lấy thông tin đơn hàng |
+| Order | PUT | /api/orders/{id}/status | Cập nhật trạng thái đơn hàng |
 
-Kiến trúc microservices trong hệ thống Đặt hàng không chỉ giúp quản lý dữ liệu hiệu quả, mà còn đảm bảo tính mở rộng, khả năng phục vụ số lượng lớn người dùng đồng thời và đáp ứng nhanh với thay đổi thị trường. Việc phân tách chức năng rõ ràng, kết hợp với các công nghệ hiện đại như Spring Cloud, Eureka, Kafka và các tiêu chuẩn giao tiếp RESTful, giúp hệ thống vận hành ổn định, dễ bảo trì và phát triển trong tương lai. 
+### 4. Inventory Service
+| Resource | Method | Endpoint | Mô tả |
+|----------|---------|-----------|--------|
+| Inventory | GET | /api/inventory/{skuCode} | Kiểm tra tồn kho |
+| Inventory | PUT | /api/inventory/{skuCode} | Cập nhật số lượng tồn kho |
+| Inventory | GET | /api/inventory/{skuCode}/quantity | Lấy số lượng tồn kho |
+
+### 5. Notification Service
+| Resource | Method | Endpoint | Mô tả |
+|----------|---------|-----------|--------|
+| Notification | POST | /api/notifications/order-confirmation | Gửi email xác nhận đơn hàng |
+| Notification | POST | /api/notifications/status-update | Gửi thông báo cập nhật trạng thái |
+| Notification | GET | /api/notifications/history | Lấy lịch sử thông báo |
+
+### Sơ đồ tương tác API:
+
+```mermaid
+graph TD
+    A[Client] -->|1. POST /api/orders| B[Order Service]
+    B -->|2. POST /api/customers/validate| C[Customer Service]
+    B -->|3. GET /api/inventory/{skuCode}| D[Inventory Service]
+    B -->|4. PUT /api/inventory/{skuCode}| D
+    B -->|5. POST /api/notifications/order-confirmation| E[Notification Service]
+```
+
+### Các điểm cần lưu ý:
+
+1. **Xác thực và Bảo mật**:
+   - Tất cả API endpoints đều yêu cầu xác thực
+   - Sử dụng JWT token để xác thực
+   - Phân quyền dựa trên role của người dùng
+
+2. **Xử lý Lỗi**:
+   - Trả về mã lỗi HTTP phù hợp
+   - Thông báo lỗi chi tiết và rõ ràng
+   - Xử lý các trường hợp timeout và retry
+
+3. **Rate Limiting**:
+   - Giới hạn số lượng request trong một khoảng thời gian
+   - Bảo vệ API khỏi quá tải
+   - Đảm bảo tính khả dụng của hệ thống
+
+4. **Monitoring và Logging**:
+   - Ghi log cho mọi request
+   - Theo dõi hiệu suất của API
+   - Cảnh báo khi có vấn đề
+
+## Bước 7: Áp dụng hướng dịch vụ (Apply Service-Orientation)
+
+### 1. Xác định các giới hạn và rủi ro triển khai
+| Vấn đề hiện tại | Giải pháp định hướng SOA |
+|-----------------|--------------------------|
+| Phụ thuộc vào tính khả dụng của Customer Service | Tăng Service Autonomy – Cache thông tin khách hàng |
+| Xử lý giao dịch phân tán giữa các service | Sử dụng Saga Pattern để đảm bảo tính nhất quán |
+| Notification Service không cần lưu trữ dữ liệu | Đúng nguyên tắc Abstraction – Stateless service |
+| API Gateway gọi các service nội bộ | Đảm bảo Loose Coupling giữa client và backend |
+| Phụ thuộc vào tính khả dụng của Inventory Service | Circuit Breaker pattern để xử lý lỗi |
+
+### 2. Tối ưu hóa kiến trúc dựa trên nguyên tắc SOA
+
+#### 2.1. Nguyên tắc Loose Coupling
+- **Ứng dụng**:
+  - Sử dụng API Gateway để điều hướng request
+  - Giao tiếp giữa các service thông qua REST API
+  - Sử dụng event-driven architecture với Kafka
+  - Mỗi service có schema riêng, độc lập
+
+#### 2.2. Nguyên tắc Service Autonomy
+- **Ứng dụng**:
+  - Mỗi service có database riêng
+  - Tự quản lý logic nghiệp vụ
+  - Có thể scale độc lập
+  - Cache dữ liệu cần thiết
+
+#### 2.3. Nguyên tắc Service Abstraction
+- **Ứng dụng**:
+  - API Gateway che giấu chi tiết triển khai
+  - Service interface độc lập với implementation
+  - Version control cho API
+  - Documentation rõ ràng
+
+#### 2.4. Nguyên tắc Reusability
+- **Ứng dụng**:
+  - Shared libraries cho common code
+  - Tái sử dụng service cho nhiều use case
+  - Common authentication/authorization
+  - Shared configuration
+
+#### 2.5. Nguyên tắc Discoverability
+- **Ứng dụng**:
+  - Service registry với Eureka
+  - API documentation với Swagger/OpenAPI
+  - Centralized logging và monitoring
+  - Health check endpoints
+
+### 3. Các pattern và best practices
+
+#### 3.1. Design Patterns
+| Pattern | Mục đích | Ứng dụng |
+|---------|----------|-----------|
+| Circuit Breaker | Xử lý lỗi service | Inventory Service |
+| Saga | Quản lý giao dịch phân tán | Order Service |
+| CQRS | Tách biệt đọc/ghi | Product Service |
+| Event Sourcing | Theo dõi thay đổi | Order Service |
+
+#### 3.2. Security Patterns
+| Pattern | Mục đích | Ứng dụng |
+|---------|----------|-----------|
+| JWT Authentication | Xác thực người dùng | Tất cả services |
+| API Gateway | Bảo mật endpoint | Gateway Service |
+| Rate Limiting | Bảo vệ API | Tất cả services |
+| Encryption | Bảo mật dữ liệu | Sensitive data |
+
+#### 3.3. Monitoring và Logging
+| Pattern | Mục đích | Ứng dụng |
+|---------|----------|-----------|
+| Distributed Tracing | Theo dõi request | Tất cả services |
+| Centralized Logging | Tập trung log | ELK Stack |
+| Health Checks | Kiểm tra service | Tất cả services |
+| Metrics Collection | Đo lường hiệu suất | Prometheus |
+
+### 4. Sơ đồ kiến trúc tối ưu
+
+```mermaid
+graph TD
+    A[Client] -->|1. Request| B[API Gateway]
+    B -->|2. Auth| C[Auth Service]
+    B -->|3. Route| D[Order Service]
+    D -->|4. Validate| E[Customer Service]
+    D -->|5. Check Stock| F[Inventory Service]
+    D -->|6. Notify| G[Notification Service]
+    D -->|7. Event| H[Kafka]
+    H -->|8. Process| I[Event Handlers]
+    
+    subgraph "Service Registry"
+        J[Eureka]
+    end
+    
+    subgraph "Monitoring"
+        K[Prometheus]
+        L[Grafana]
+    end
+    
+    subgraph "Logging"
+        M[ELK Stack]
+    end
+```
+
+### 5. Các điểm cần lưu ý
+
+1. **Tính khả dụng**:
+   - Circuit breaker cho service calls
+   - Retry mechanism cho failed requests
+   - Fallback strategies
+   - Health check endpoints
+
+2. **Bảo mật**:
+   - JWT authentication
+   - Role-based access control
+   - API key management
+   - Data encryption
+
+3. **Hiệu suất**:
+   - Caching strategy
+   - Load balancing
+   - Connection pooling
+   - Async processing
+
+4. **Khả năng mở rộng**:
+   - Horizontal scaling
+   - Database sharding
+   - Message queue
+   - Stateless services
