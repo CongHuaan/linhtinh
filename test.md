@@ -119,6 +119,16 @@ Các bước còn lại:
   - phone: Số điện thoại (String)
   - address: Địa chỉ (String)
 
+#### 1.4. Thực thể Cart (Giỏ hàng)
+- **Mục đích**: Quản lý giỏ hàng của khách hàng
+- **Thuộc tính chính**:
+  - id: Định danh duy nhất (Long)
+  - customerId: Mã khách hàng (Long)
+  - items: Danh sách sản phẩm (List<CartItem>)
+  - totalAmount: Tổng tiền (BigDecimal)
+  - createdAt: Thời gian tạo (Date)
+  - updatedAt: Thời gian cập nhật (Date)
+
 ### 2. Xác định các dịch vụ thực thể:
 
 #### 2.1. Order Service
@@ -153,6 +163,15 @@ Các bước còn lại:
   2. Gửi thông báo trạng thái đơn hàng
   3. Gửi thông báo khi có vấn đề với đơn hàng
 
+#### 2.5. Cart Service
+- **Mục đích**: Quản lý giỏ hàng của khách hàng
+- **Các chức năng chính**:
+  1. Thêm sản phẩm vào giỏ hàng
+  2. Xóa sản phẩm khỏi giỏ hàng
+  3. Cập nhật số lượng sản phẩm
+  4. Tính toán tổng tiền
+  5. Xóa giỏ hàng sau khi đặt hàng
+
 ### 3. Mối quan hệ giữa các dịch vụ:
 
 ```mermaid
@@ -160,8 +179,10 @@ graph TD
     A[Order Service] -->|1. Kiểm tra khách hàng| B[Customer Service]
     A -->|2. Kiểm tra tồn kho| C[Inventory Service]
     A -->|3. Gửi thông báo| D[Notification Service]
-    C -->|4. Cập nhật tồn kho| A
-    B -->|5. Cập nhật lịch sử| A
+    A -->|4. Lấy thông tin giỏ hàng| E[Cart Service]
+    C -->|5. Cập nhật tồn kho| A
+    B -->|6. Cập nhật lịch sử| A
+    E -->|7. Xóa giỏ hàng| A
 ```
 
 ### 4. Luồng xử lý chính:
@@ -308,6 +329,7 @@ sequenceDiagram
 |-------------------|--------|
 | Xác thực khách hàng | Kiểm tra thông tin và quyền hạn của khách hàng |
 | Kiểm tra tồn kho | Xác minh số lượng sản phẩm có đủ để đáp ứng đơn hàng |
+| Quản lý giỏ hàng | Thêm/xóa sản phẩm và tính toán giá |
 | Tạo đơn hàng | Tạo và lưu trữ thông tin đơn hàng mới |
 | Cập nhật tồn kho | Giảm số lượng sản phẩm trong kho sau khi đặt hàng |
 | Gửi thông báo | Gửi email xác nhận đơn hàng cho khách hàng |
@@ -317,6 +339,7 @@ sequenceDiagram
 |----------|--------|
 | Customer | Thông tin khách hàng và lịch sử mua hàng |
 | Product | Thông tin sản phẩm và số lượng tồn kho |
+| Cart | Giỏ hàng và chi tiết sản phẩm |
 | Order | Thông tin đơn hàng và chi tiết sản phẩm |
 | Inventory | Quản lý số lượng tồn kho của sản phẩm |
 | Notification | Quản lý và gửi thông báo cho khách hàng |
@@ -326,6 +349,7 @@ sequenceDiagram
 |-----------------|-------------------|
 | Customer | /api/customers |
 | Product | /api/products |
+| Cart | /api/cart |
 | Order | /api/orders |
 | Inventory | /api/inventory |
 | Notification | /api/notifications |
@@ -366,6 +390,16 @@ sequenceDiagram
 | Notification | POST | /api/notifications/order-confirmation | Gửi email xác nhận đơn hàng |
 | Notification | POST | /api/notifications/status-update | Gửi thông báo cập nhật trạng thái |
 | Notification | GET | /api/notifications/history | Lấy lịch sử thông báo |
+
+### 6. Cart Service
+| Resource | Method | Endpoint | Mô tả |
+|----------|---------|-----------|--------|
+| Cart | GET | /api/cart/{customerId} | Lấy thông tin giỏ hàng |
+| Cart | POST | /api/cart/items | Thêm sản phẩm vào giỏ hàng |
+| Cart | PUT | /api/cart/items/{itemId} | Cập nhật số lượng sản phẩm |
+| Cart | DELETE | /api/cart/items/{itemId} | Xóa sản phẩm khỏi giỏ hàng |
+| Cart | DELETE | /api/cart/{cartId} | Xóa toàn bộ giỏ hàng |
+| Cart | GET | /api/cart/{customerId}/total | Tính tổng tiền giỏ hàng |
 
 ### Sơ đồ tương tác API:
 
@@ -542,7 +576,16 @@ graph TD
 
 ### Quy trình phối hợp khi khách hàng đặt hàng
 
-#### Order-handler (bắt đầu)
+#### Cart-handler (bắt đầu)
+Lấy thông tin giỏ hàng của khách hàng:
+- *Endpoint*: GET /api/cart/{customerId}
+- *Response*: { items, totalAmount }
+
+Xác thực giỏ hàng:
+- *Endpoint*: POST /api/cart/validate
+- *Payload*: { cartId, items }
+
+#### Order-handler
 Gọi Customer Service để xác thực thông tin khách hàng:
 - *Endpoint*: POST /api/customers/validate
 - *Payload*: { customerId, orderDetails }
@@ -559,6 +602,9 @@ Cập nhật tồn kho:
 - *Endpoint*: PUT /api/inventory/{skuCode}
 - *Payload*: { quantity }
 
+Xóa giỏ hàng sau khi đặt hàng thành công:
+- *Endpoint*: DELETE /api/cart/{cartId}
+
 #### Notification-handler
 Gửi thông báo xác nhận đơn hàng:
 - *Endpoint*: POST /api/notifications/order-confirmation
@@ -566,11 +612,12 @@ Gửi thông báo xác nhận đơn hàng:
 
 ### Dịch vụ phối hợp (Composition Candidate)
 - *Dịch vụ tổng hợp (Composite Service): Order Processing Service*
-  - *Mô tả*: Đây là dịch vụ phối hợp bao gồm các dịch vụ con (Order-handler, Notification-handler) để xử lý toàn bộ quy trình đặt hàng.
+  - *Mô tả*: Đây là dịch vụ phối hợp bao gồm các dịch vụ con (Cart-handler, Order-handler, Notification-handler) để xử lý toàn bộ quy trình đặt hàng.
   - *Luồng phối hợp*:
-    1. Order-handler khởi động bằng cách xác thực thông tin khách hàng và kiểm tra tồn kho.
-    2. Sau khi xác thực thành công, tạo đơn hàng mới và cập nhật tồn kho.
-    3. Notification-handler nhận thông tin đơn hàng và gửi thông báo xác nhận đến khách hàng.
+    1. Cart-handler khởi động bằng cách lấy và xác thực thông tin giỏ hàng.
+    2. Order-handler tiếp tục xác thực thông tin khách hàng và kiểm tra tồn kho.
+    3. Sau khi xác thực thành công, tạo đơn hàng mới, cập nhật tồn kho và xóa giỏ hàng.
+    4. Notification-handler nhận thông tin đơn hàng và gửi thông báo xác nhận đến khách hàng.
 
 ### Sơ đồ tương tác giữa các dịch vụ phối hợp:
 
@@ -578,12 +625,17 @@ Gửi thông báo xác nhận đơn hàng:
 sequenceDiagram
     participant Client
     participant OrderProcessing
+    participant CartHandler
     participant OrderHandler
     participant NotificationHandler
     participant CustomerService
     participant InventoryService
 
     Client->>OrderProcessing: POST /api/orders
+    OrderProcessing->>CartHandler: Get Cart
+    CartHandler-->>OrderProcessing: Cart Details
+    OrderProcessing->>CartHandler: Validate Cart
+    CartHandler-->>OrderProcessing: Cart Valid
     OrderProcessing->>OrderHandler: Process Order
     OrderHandler->>CustomerService: Validate Customer
     CustomerService-->>OrderHandler: Customer Valid
@@ -591,6 +643,8 @@ sequenceDiagram
     InventoryService-->>OrderHandler: Stock Available
     OrderHandler->>InventoryService: Update Stock
     InventoryService-->>OrderHandler: Stock Updated
+    OrderHandler->>CartHandler: Clear Cart
+    CartHandler-->>OrderHandler: Cart Cleared
     OrderHandler->>OrderProcessing: Order Created
     OrderProcessing->>NotificationHandler: Send Confirmation
     NotificationHandler-->>OrderProcessing: Notification Sent
@@ -603,18 +657,22 @@ sequenceDiagram
    - Rollback transaction khi có lỗi
    - Retry mechanism cho các service call
    - Circuit breaker pattern
+   - Xử lý trường hợp giỏ hàng trống
 
 2. **Tính nhất quán dữ liệu**:
    - Sử dụng Saga pattern
    - Event sourcing cho tracking
    - Distributed transaction
+   - Đảm bảo giỏ hàng được xóa sau khi đặt hàng thành công
 
 3. **Khả năng mở rộng**:
    - Stateless services
    - Message queue cho async processing
    - Caching strategy
+   - Xử lý đồng thời nhiều giỏ hàng
 
 4. **Monitoring**:
    - Distributed tracing
    - Performance metrics
    - Error tracking
+   - Cart abandonment tracking
