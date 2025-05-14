@@ -140,9 +140,6 @@ graph LR
 ```
 
 ```mermaid
-Tôi sẽ cập nhật luồng sequence để sau khi xem giỏ hàng thì đặt hàng luôn, đơn giản hơn:
-
-```mermaid
 sequenceDiagram
     autonumber
 
@@ -199,8 +196,6 @@ sequenceDiagram
     OrderSvc ->> Gateway: Order Created
     Gateway ->> Frontend: Order Success
     Frontend ->> User: Order Confirmation
-```
-
 ```
 
 ## Scalability & Fault Tolerance
